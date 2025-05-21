@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-import sqlite3
+import db_crud
 
 app = FastAPI()
 
@@ -7,23 +7,40 @@ app = FastAPI()
 def home():
     return {"output" : "api"}
 
-conn = sqlite3.connect("api_database.db")
+@app.post('/create_item/<newitem>')
+def create_item(newitem):
+    db_crud.create(newitem)
+    return "saved"
 
-creat_table_query = '''create table if not exists api
-                        (id integer primary key autoincrement,
-                        number text
-                        )'''
+@app.get('/r_all_item/{column}')
+def read_all_item(column):
+    return db_crud.read_all(column)
 
-cursor = conn.cursor()
-cursor.execute(creat_table_query)
-
-conn.commit()
-
-def create(item):
-    cursor.execute('insert into api (item) values (?)', (item,))
-    conn.commit()
-
-@app.post('/items/<newitem>')
-def save_number(newitem):
-    create(str(newitem))
-    return "done"
+@app.get('/r_item/{read_index}')
+def read_item(read_index):
+    index_i = int(read_index)
+    if index_i in db_crud.read_all("id"):
+        return db_crud.read_i(index_i)
+    
+    else:
+        return "out of range"
+    
+@app.post('/update_item/<update_item>/<index>')
+def update(update_item, update_index):
+    index_i = int(update_index)
+    if index_i in db_crud.read_all("id"):
+        db_crud.update(update_item, index_i)
+        return "updated"
+    
+    else:
+        return "out of range"
+    
+@app.post('/delete_item/<delete_index>')
+def delete(delete_index):
+    index_i = int(delete_index)
+    if index_i in db_crud.read_all("id"):
+        db_crud.delete(index_i)
+        return "deleted"
+    
+    else:
+        return "out of range"
